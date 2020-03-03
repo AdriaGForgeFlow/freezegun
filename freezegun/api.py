@@ -455,12 +455,13 @@ def _parse_tz_offset(tz_offset):
 
 class TickingDateTimeFactory(object):
 
-    def __init__(self, time_to_freeze, start):
+    def __init__(self, time_to_freeze, start, tick_rate=1):
         self.time_to_freeze = time_to_freeze
         self.start = start
+        self.tick_rate = tick_rate
 
     def __call__(self):
-        return self.time_to_freeze + (real_datetime.now() - self.start)
+        return self.time_to_freeze + (real_datetime.now() - self.start) * self.tick_rate
 
 
 class FrozenDateTimeFactory(object):
@@ -514,11 +515,12 @@ class StepTickTimeFactory(object):
 class _freeze_time(object):
 
 
-    def __init__(self, time_to_freeze_str, tz_offset, ignore, tick, as_arg, auto_tick_seconds):
+    def __init__(self, time_to_freeze_str, tz_offset, ignore, tick, tick_rate, as_arg, auto_tick_seconds):
         self.time_to_freeze = _parse_time_to_freeze(time_to_freeze_str)
         self.tz_offset = _parse_tz_offset(tz_offset)
         self.ignore = tuple(ignore)
         self.tick = tick
+        self.tick_rate = tick_rate
         self.auto_tick_seconds = auto_tick_seconds
         self.undo_changes = []
         self.modules_at_start = set()
@@ -590,6 +592,8 @@ class _freeze_time(object):
 
         if self.auto_tick_seconds:
             freeze_factory = StepTickTimeFactory(self.time_to_freeze, self.auto_tick_seconds)
+        elif self.tick_rate != 1:
+            freeze_factory = TickingDateTimeFactory(self.time_to_freeze, real_datetime.now(), self.tick_rate)
         elif self.tick:
             freeze_factory = TickingDateTimeFactory(self.time_to_freeze, real_datetime.now())
         else:
@@ -743,7 +747,7 @@ class _freeze_time(object):
         return wrapper
 
 
-def freeze_time(time_to_freeze=None, tz_offset=0, ignore=None, tick=False, as_arg=False, auto_tick_seconds=0):
+def freeze_time(time_to_freeze=None, tz_offset=0, ignore=None, tick=False, tick_rate=1, as_arg=False, auto_tick_seconds=0):
     acceptable_times = (type(None), _string_type, datetime.date, datetime.timedelta,
              types.FunctionType, types.GeneratorType)
 
@@ -782,7 +786,7 @@ def freeze_time(time_to_freeze=None, tz_offset=0, ignore=None, tick=False, as_ar
         'gi',
     ])
 
-    return _freeze_time(time_to_freeze, tz_offset, ignore, tick, as_arg, auto_tick_seconds)
+    return _freeze_time(time_to_freeze, tz_offset, ignore, tick, tick_rate, as_arg, auto_tick_seconds)
 
 
 # Setup adapters for sqlite
