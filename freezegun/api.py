@@ -605,8 +605,8 @@ class _freeze_time(object):
         ignore_lists.append(self.ignore)
         tick_flags.append(self.tick)
 
-        if is_already_started:
-            return freeze_factory
+        # if is_already_started:
+        #     return freeze_factory
 
         # Change the modules
         datetime.datetime = FakeDatetime
@@ -778,7 +778,7 @@ def freeze_time(time_to_freeze=None, tz_offset=0, ignore=None, tick=False, tick_
         'six.moves',
         'django.utils.six.moves',
         'google.gax',
-        'threading',
+        # 'threading',
         'Queue',
         'selenium',
         '_pytest.terminal.',
